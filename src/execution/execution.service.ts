@@ -14,15 +14,10 @@ export class ExecutionService {
     }
 
     try {
-      // SECURITY WARNING: In a real production environment, 
-      // this MUST run in a secure sandbox like a Docker container.
-      // This is a local fallback using node -e.
-      
-      // Escape the code for the command line. This is basic and still vulnerable locally.
       const escapedCode = code.replace(/"/g, '\\"');
-      
+
       const { stdout, stderr } = await execAsync(`node -e "${escapedCode}"`, {
-        timeout: 5000, // 5 second timeout to prevent infinite loops
+        timeout: 5000,
         killSignal: 'SIGTERM',
       });
 
@@ -30,12 +25,13 @@ export class ExecutionService {
         return stderr;
       }
       return stdout;
-    } catch (error: any) {
-      if (error.killed) {
+    } catch (e: unknown) {
+      const err = e as { killed?: boolean; message?: string; stderr?: string };
+      if (err.killed) {
         return 'Execution Timed Out (5000ms)';
       }
-      this.logger.error(`Execution error: ${error.message}`);
-      return error.stderr || error.message || 'Unknown Execution Error';
+      this.logger.error(`Execution error: ${err.message || 'Unknown Error'}`);
+      return err.stderr || err.message || 'Unknown Execution Error';
     }
   }
 }
