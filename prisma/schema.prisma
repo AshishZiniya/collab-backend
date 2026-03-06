@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String        @id @default(uuid()) @db.Uuid
+  username      String        @unique @db.VarChar(50)
+  email         String        @unique @db.VarChar(255)
+  password_hash String        @db.VarChar(255)
+  created_at    DateTime      @default(now()) @db.Timestamptz
+
+  created_sessions Session[]      @relation("CreatedBy")
+  participations   Participant[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String        @id @default(uuid()) @db.Uuid
+  title        String        @db.VarChar(100)
+  language     String        @default("javascript") @db.VarChar(50)
+  code_content String        @default("") @db.Text
+  status       String        @default("active") @db.VarChar(20)
+  created_at   DateTime      @default(now()) @db.Timestamptz
+  updated_at   DateTime      @updatedAt @db.Timestamptz
+
+  created_by   String        @db.Uuid
+  creator      User          @relation("CreatedBy", fields: [created_by], references: [id], onDelete: Cascade)
+
+  participants Participant[]
+
+  @@map("sessions")
+}
+
+model Participant {
+  session_id String   @db.Uuid
+  user_id    String   @db.Uuid
+  role       String   @db.VarChar(20)
+  joined_at  DateTime @default(now()) @db.Timestamptz
+
+  session Session @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([session_id, user_id])
+  @@map("session_participants")
+}
