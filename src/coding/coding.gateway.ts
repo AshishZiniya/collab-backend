@@ -110,4 +110,15 @@ export class CodingGateway implements OnGatewayConnection, OnGatewayDisconnect {
       output,
     });
   }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('languageChange')
+  handleLanguageChange(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { sessionId: string; language: string },
+  ) {
+    client.broadcast
+      .to(data.sessionId)
+      .emit('receiveLanguageChange', data.language);
+  }
 }

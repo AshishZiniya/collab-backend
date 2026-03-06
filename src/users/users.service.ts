@@ -38,4 +38,40 @@ export class UsersService {
       where: { email },
     });
   }
+
+  async updateResetToken(
+    userId: string,
+    token: string | null,
+    expires: Date | null,
+  ): Promise<void> {
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: {
+        reset_token: token,
+        reset_token_expires: expires,
+      },
+    });
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.prisma.client.user.findFirst({
+      where: {
+        reset_token: token,
+        reset_token_expires: {
+          gt: new Date(),
+        },
+      },
+    });
+  }
+
+  async updatePassword(userId: string, newPasswordHash: string): Promise<void> {
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: {
+        password_hash: newPasswordHash,
+        reset_token: null,
+        reset_token_expires: null,
+      },
+    });
+  }
 }
